@@ -25,6 +25,7 @@ func main() {
 
 func run() error {
 	var (
+		httpAddr    = flag.String("http", ":8080", "HTTP listen address")
 		user        = flag.String("user", "eribo", "username to use to connect to MySQL")
 		pass        = flag.String("pass", "", "password to use to connect to MySQL")
 		host        = flag.String("host", "localhost", "host for connecting to MySQL")
@@ -33,6 +34,10 @@ func run() error {
 		secret      = flag.String("secret", "", "secret to decode JWT")
 		issuer      = flag.String("issuer", "monban", "accepting tokens from this issuer")
 		showVersion = flag.Bool("v", false, "print program version")
+		certFile    = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
+		keyFile     = flag.String("tlskey", "", "TLS private key in PEM format. Must be used together with -tlscert")
+		// Set after flag parsing based on certFile & keyFile.
+		useTLS bool
 	)
 	flag.Parse()
 
@@ -53,6 +58,11 @@ func run() error {
 	}
 
 	s := tanmatsu.NewServer(store, version, *issuer, []byte(*secret))
-	log.Println("listening on :8080")
-	return http.ListenAndServe(":8080", s)
+
+	useTLS = *certFile != "" && *keyFile != ""
+	if useTLS {
+		return http.ListenAndServeTLS(*httpAddr, *certFile, *keyFile, s)
+	} else {
+		return http.ListenAndServe(*httpAddr, s)
+	}
 }
