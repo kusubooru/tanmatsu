@@ -53,6 +53,8 @@ var (
 	deploy    = flag.Bool("deploy", false, "Deploy binary to server.")
 	buildARCH = flag.String("arch", runtime.GOARCH, "Architecture to build for.")
 	buildOS   = flag.String("os", runtime.GOOS, "Operating system to build for.")
+	up        = flag.Bool("up", false, "Start docker dependencies.")
+	down      = flag.Bool("down", false, "Stop docker dependencies.")
 )
 
 func usage() {
@@ -87,6 +89,16 @@ func main() {
 
 	if *deploy {
 		deployBin(bin, *buildOS, *buildARCH)
+		os.Exit(0)
+	}
+
+	if *up {
+		startDocker()
+		os.Exit(0)
+	}
+
+	if *down {
+		stopDocker()
 		os.Exit(0)
 	}
 
@@ -171,4 +183,28 @@ func setEnv(env []string, key, value string) []string {
 	}
 	env = append(env, fmt.Sprintf("%s=%s", key, value))
 	return env
+}
+
+func startDocker() {
+	cmd := exec.Command("docker-compose", "up", "-d")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	cmd.Env = copyGoEnv()
+	fmt.Println("Starting docker dependencies:")
+	if err := cmd.Run(); err != nil {
+		log.Fatalln("Error running docker-compose:", err)
+	}
+}
+
+func stopDocker() {
+	cmd := exec.Command("docker-compose", "down")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	cmd.Env = copyGoEnv()
+	fmt.Println("Stopping docker dependencies:")
+	if err := cmd.Run(); err != nil {
+		log.Fatalln("Error running docker-compose:", err)
+	}
 }

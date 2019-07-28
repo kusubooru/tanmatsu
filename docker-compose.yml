@@ -1,0 +1,18 @@
+version: '2.0'
+services:
+  db:
+    image: mysql:5.5
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'eribo'
+      MYSQL_USER: 'eribo'
+      MYSQL_PASSWORD: 'eribo'
+    ports:
+      - '3306:3306'
+    expose:
+      # Opens port 3306 on the container
+      - '3306'
+    volumes:
+      - my-db:/var/lib/mysql
+volumes:
+  my-db:
